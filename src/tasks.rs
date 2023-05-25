@@ -9,5 +9,10 @@ pub struct Task {
     priority: Option<i8>,
     status: Option<String>,
     due: Option<NaiveDate>,
-    colour: egui::Color32,
+}
+
+pub struct TaskList {
+    name: String,
+    tasks: Vec<Task>,
+    color: egui::Color32
 }
