@@ -1,18 +1,34 @@
 use chrono::prelude::*;
 use eframe::egui;
 
+#[derive(Clone)]
 pub struct Task {
-    summary: String,
-    completed: bool,
-    description: String,
-    completion: Option<i8>,
-    priority: Option<i8>,
-    status: Option<String>,
-    due: Option<NaiveDate>,
+    pub summary: String,
+    pub completed: bool,
+    pub description: String,
+    pub progress: u8,
+    pub priority: u8,
+    pub status: String,
+    pub due: NaiveDate,
+}
+
+// Define default task
+impl Default for Task {
+    fn default () -> Self {
+        Self {
+            summary: "Do the dishes".to_string(),
+            completed: false,
+            description: "".to_string(),
+            progress: 0,
+            priority: 0,
+            status: "".to_string(),
+            due: NaiveDate::default(),
+        }
+    }
 }
 
 pub struct TaskList {
-    name: String,
-    tasks: Vec<Task>,
-    color: egui::Color32
+    pub name: String,
+    pub tasks: Vec<Task>,
+    pub color: egui::Color32
 }
