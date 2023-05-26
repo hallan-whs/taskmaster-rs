@@ -1,6 +1,7 @@
 mod tasks;
 mod app;
 mod ui_elements;
+mod task_views;
 
 const WINDOW_TITLE: &str = "Hello world";
 
