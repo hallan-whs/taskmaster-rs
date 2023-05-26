@@ -26,58 +26,82 @@ impl eframe::App for App {
 // ┌ Main render loop function ───────────────────────────────────────┐ ┌ Main UI panel ─────────────────────────────┐
 fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { egui::CentralPanel::default().show(ctx, |ui| {
 
-    ui.heading("Create a task");
+    // Set global ui scale
+    ctx.set_pixels_per_point(1.5);
 
-    // Task name input
-    ui.horizontal(|ui| {
-        let name_label = ui.label("Task name ");
-        ui.text_edit_singleline(&mut self.input_task.summary)
-            .labelled_by(name_label.id);
-    });
+    // Set spacing between panels
+    ui.spacing_mut().item_spacing = egui::vec2(10.0, 10.0);
 
-    // Task progress and priority sliders
-    ui.horizontal(|ui| {
-        let progress_label = ui.label("Progress ");
-        ui_elements::percentage_slider(ui, &mut self.input_task.progress)
-            .labelled_by(progress_label.id);
 
-        let priority_label = ui.label("Priority ");
-        ui_elements::percentage_slider(ui, &mut self.input_task.priority)
-            .labelled_by(priority_label.id);
-    });
-    
-    // Task description input
-    let desc_label = ui.label("Task description ");
-    ui.text_edit_multiline(&mut self.input_task.description)
-        .labelled_by(desc_label.id);
+    //Task input panel
+    ui_elements::basic_frame().show(ui, |ui| {
 
-    // Task status input
-    ui.horizontal(|ui| {
-        let status_label = ui.label("Task status ");
-        ui.text_edit_singleline(&mut self.input_task.status)
-            .labelled_by(status_label.id);
-    });
+        // Expand to fit window
+        ui.set_width(ui.available_width());
+        
+        ui.heading("Create a task");
 
-    // Task complete checkbox
-    ui.checkbox(&mut self.input_task.completed, "Task is complete");
+        // Task name input
+        ui.horizontal(|ui| {
+            let name_label = ui.label("Task name ");
+            ui.text_edit_singleline(&mut self.input_task.summary)
+                .labelled_by(name_label.id);
+        });
 
-    if ui.button("Add task").clicked() {
+        // Task progress and priority sliders
+        ui.horizontal(|ui| {
+            let progress_label = ui.label("Progress ");
+            ui_elements::percentage_slider(ui, &mut self.input_task.progress)
+                .labelled_by(progress_label.id);
 
-        // Add specified task to the list of tasks
-        self.input_task_list.tasks.push(self.input_task.clone());
+            let priority_label = ui.label("Priority ");
+            ui_elements::percentage_slider(ui, &mut self.input_task.priority)
+                .labelled_by(priority_label.id);
+        });
+        
+        // Task description input
+        let desc_label = ui.label("Task description ");
+        ui.text_edit_multiline(&mut self.input_task.description)
+            .labelled_by(desc_label.id);
 
-        // Enable showing completed tasks if the task that was just added is marked as complete
-        // This prevents confusion from a newly added task not being shown if it's complete
-        if self.input_task.completed & !self.show_completed_tasks {
-            self.show_completed_tasks = true;
+        // Task status input
+        ui.horizontal(|ui| {
+            let status_label = ui.label("Task status ");
+            ui.text_edit_singleline(&mut self.input_task.status)
+                .labelled_by(status_label.id);
+        });
+
+        // Task complete checkbox
+        ui.checkbox(&mut self.input_task.completed, "Task is complete");
+
+        if ui.button("Add task").clicked() {
+
+            // Add specified task to the list of tasks
+            self.input_task_list.tasks.push(self.input_task.clone());
+
+            // Enable showing completed tasks if the task that was just added is marked as complete
+            // This prevents confusion from a newly added task not being shown if it's complete
+            if self.input_task.completed & !self.show_completed_tasks {
+                self.show_completed_tasks = true;
+            }
+
         }
 
-    }
+        ui.checkbox(&mut self.show_completed_tasks, "Show completed tasks");
+    });
 
-    ui.checkbox(&mut self.show_completed_tasks, "Show completed tasks");
 
-    // Display tasks in classic view
-    ClassicView::default().display(ui, &mut self.input_task_list, self.show_completed_tasks);
+    //Task input panel
+    ui_elements::basic_frame().show(ui, |ui| {
+        
+        // Expand to fit window
+        ui.set_width(ui.available_width());
+        ui.set_height(ui.available_height());
+        
+        // Display tasks in classic view
+        ClassicView::default().display(ui, &mut self.input_task_list, self.show_completed_tasks);
+
+    });
 
 });}
 
