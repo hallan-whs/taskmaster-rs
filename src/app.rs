@@ -98,8 +98,13 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { egui::Ce
         ui.set_width(ui.available_width());
         ui.set_height(ui.available_height());
         
-        // Display tasks in classic view
-        ClassicView::default().display(ui, &mut self.input_task_list, self.show_completed_tasks);
+        // Scrollable area
+        egui::ScrollArea::vertical().show_rows(ui, 10.0, self.input_task_list.tasks.len(), |ui, _| {
+
+            // Display tasks in classic view
+            ClassicView::default().display(ui, &mut self.input_task_list, self.show_completed_tasks);
+
+        });
 
     });
 
