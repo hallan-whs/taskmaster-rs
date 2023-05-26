@@ -27,6 +27,7 @@ impl Default for Task {
     }
 }
 
+#[derive(Default)]
 pub struct TaskList {
     pub name: String,
     pub tasks: Vec<Task>,

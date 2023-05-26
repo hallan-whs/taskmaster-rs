@@ -1,15 +1,22 @@
 use eframe::egui;
-use crate::tasks::Task;
+
+use crate::tasks::*;
+use crate::task_views::*;
 use crate::ui_elements;
 
 #[derive(Default)]
 pub struct App { // Stores application state
     input_task: Task,
+    input_task_list: TaskList,
+    show_completed_tasks: bool,
 }
 
 impl App { // Defines the default application state
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
-        Self::default()
+        Self {
+            show_completed_tasks: false,
+            ..Self::default() // Sets everything to default except for the variables defined above
+        }
     }
 }
 
@@ -53,6 +60,24 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { egui::Ce
 
     // Task complete checkbox
     ui.checkbox(&mut self.input_task.completed, "Task is complete");
+
+    if ui.button("Add task").clicked() {
+
+        // Add specified task to the list of tasks
+        self.input_task_list.tasks.push(self.input_task.clone());
+
+        // Enable showing completed tasks if the task that was just added is marked as complete
+        // This prevents confusion from a newly added task not being shown if it's complete
+        if self.input_task.completed & !self.show_completed_tasks {
+            self.show_completed_tasks = true;
+        }
+
+    }
+
+    ui.checkbox(&mut self.show_completed_tasks, "Show completed tasks");
+
+    // Display tasks in classic view
+    ClassicView::default().display(ui, &mut self.input_task_list, self.show_completed_tasks);
 
 });}
 
