@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 chrono = "0.4.*"
 eframe = "0.22.*"
+egui_extras = { version = "0.22.*", features = ["datepicker"]}

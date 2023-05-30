@@ -1,4 +1,5 @@
 use eframe::egui;
+use egui_extras::DatePickerButton;
 
 use crate::tasks::*;
 use crate::task_views::*;
@@ -72,6 +73,9 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { egui::Ce
                 .labelled_by(status_label.id);
         });
 
+        // Due date input
+        ui.add(DatePickerButton::new(&mut self.input_task.due));
+
         // Task complete checkbox
         ui.checkbox(&mut self.input_task.completed, "Task is complete");
 
@@ -91,7 +95,7 @@ fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) { egui::Ce
     });
 
 
-    //Task input panel
+    //Task list panel
     ui_elements::basic_frame().show(ui, |ui| {
         
         // Expand to fit window

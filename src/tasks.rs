@@ -10,7 +10,7 @@ pub struct Task {
     pub progress: u8,
     pub priority: u8,
     pub status: String,
-    pub due: NaiveDate,
+    pub due: NaiveDate
 }
 
 // Define default task
@@ -23,7 +23,7 @@ impl Default for Task {
             progress: 0,
             priority: 0,
             status: "".to_string(),
-            due: NaiveDate::default(),
+            due: chrono::Local::now().date_naive()
         }
     }
 }
