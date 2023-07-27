@@ -1,12 +1,14 @@
-mod tasks;
-mod app;
-mod ui_elements;
-mod task_views;
+use taskmaster_rs::app;
 
 const WINDOW_TITLE: &str = "Hello world";
 
 fn main() {
     // Initialize the window with a default option set and run the app defined in app.rs
     let native_options = eframe::NativeOptions::default();
-    eframe::run_native(WINDOW_TITLE, native_options, Box::new(|cc| Box::new(app::App::new(cc)))).unwrap();
+    eframe::run_native(
+        WINDOW_TITLE,
+        native_options,
+        Box::new(|cc| Box::new(app::App::new(cc))),
+    )
+    .unwrap();
 }
