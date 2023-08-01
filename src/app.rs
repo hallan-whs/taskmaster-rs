@@ -1,14 +1,13 @@
 // ----------------------------------------------------------------------------
 // Determines the app's state and behavior.
 // An instance of the app is instantiated in the main function,
-// and runs the update loop as implemented below.
+// and runs the update loop as it is implemented below.
 // ----------------------------------------------------------------------------
 
 use eframe::egui;
-use egui_extras::DatePickerButton;
 
 use crate::task_views::*;
-use crate::tasks::*;
+use crate::task::*;
 use crate::ui_elements;
 
 #[derive(Default)]
@@ -18,6 +17,7 @@ pub struct App {
     input_task_list: TaskList,
     show_completed_tasks: bool,
     sort_by: TaskSort,
+    show_full_edit: bool,
 }
 
 impl App {
@@ -37,64 +37,69 @@ impl eframe::App for App {
         // - Main UI panel ---------------------------
         egui::CentralPanel::default().show(ctx, |ui| {
             // Set global ui scale
-            ctx.set_pixels_per_point(1.5);
+            ctx.set_pixels_per_point(1.75);
 
             // Set spacing between panels
             ui.spacing_mut().item_spacing = egui::vec2(10.0, 10.0);
 
             //Task input panel
             ui_elements::basic_frame().show(ui, |ui| {
-                // Expand to fit window
-                ui.set_width(ui.available_width());
-
-                ui.heading("Create a task");
-
-                // Task name input
                 ui.horizontal(|ui| {
-                    let name_label = ui.label("Task name ");
-                    ui.text_edit_singleline(&mut self.input_task.summary)
-                        .labelled_by(name_label.id);
-                });
+                    // Expand to fit window
+                    ui.set_width(ui.available_width());
 
-                // Task progress and priority sliders
-                ui.horizontal(|ui| {
-                    let progress_label = ui.label("Progress ");
-                    ui_elements::percentage_slider(ui, &mut self.input_task.progress)
-                        .labelled_by(progress_label.id);
+                    // Decides whether to show the simple task editing UI
+                    // or a simplified/minimal version
+                    if self.show_full_edit {
+                        // Full task editing UI
+                        ui.vertical(|ui| {
+                            ui_elements::task_edit::full(ui, &mut self.input_task);
 
-                    let priority_label = ui.label("Priority ");
-                    ui_elements::percentage_slider(ui, &mut self.input_task.priority)
-                        .labelled_by(priority_label.id);
-                });
+                            if ui.button("Add task").clicked() {
+                                // Add input task to the list of tasks
+                                self.input_task_list.tasks.push(self.input_task.clone());
 
-                // Task description input
-                let desc_label = ui.label("Task description ");
-                ui.text_edit_multiline(&mut self.input_task.description)
-                    .labelled_by(desc_label.id);
+                                // Enable showing completed tasks if the task
+                                // that was just added is marked as complete
+                                // This prevents confusion from a newly added
+                                // task not being shown if it's already marked
+                                // as complete when it's added to the list.
+                                if self.input_task.completed & !self.show_completed_tasks {
+                                    self.show_completed_tasks = true;
+                                }
+                            }
+                        });
+                    } else {
+                        // Simplified task editing UI
+                        ui.horizontal(|ui| {
+                            if ui.button("+").clicked() {
+                                // Add input task to the list of tasks
+                                self.input_task_list.add(Task {
+                                    summary: self.input_task.clone().summary,
+                                    completed: self.input_task.clone().completed,
+                                    .. Task::default()
+                                });
 
-                // Task status input
-                ui.horizontal(|ui| {
-                    let status_label = ui.label("Task status ");
-                    ui.text_edit_singleline(&mut self.input_task.status)
-                        .labelled_by(status_label.id);
-                });
+                                // Enable showing completed tasks if the task
+                                // that was just added is marked as complete
+                                // This prevents confusion from a newly added
+                                // task not being shown if it's marked complete
+                                if self.input_task.completed & !self.show_completed_tasks {
+                                    self.show_completed_tasks = true;
+                                }
+                            }
 
-                // Due date input
-                ui.add(DatePickerButton::new(&mut self.input_task.due));
-
-                // Task complete checkbox
-                ui.checkbox(&mut self.input_task.completed, "Task is complete");
-
-                if ui.button("Add task").clicked() {
-                    // Add specified task to the list of tasks
-                    self.input_task_list.tasks.push(self.input_task.clone());
-
-                    // Enable showing completed tasks if the task that was just added is marked as complete
-                    // This prevents confusion from a newly added task not being shown if it's complete
-                    if self.input_task.completed & !self.show_completed_tasks {
-                        self.show_completed_tasks = true;
+                            ui_elements::task_edit::lite(ui, &mut self.input_task);
+                        });
                     }
-                }
+
+                    // This is the button which switches between the views
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
+                        if ui.button("...").clicked() {
+                            self.show_full_edit = !self.show_full_edit
+                        }
+                    });
+                })
             });
 
             //Task list panel
@@ -138,9 +143,7 @@ impl eframe::App for App {
                     self.input_task_list.tasks.len(),
                     |ui, _| {
                         // Display tasks in classic view
-                        // This struct has no fields, so functions it implements
-                        // can just be called arbitrarily
-                        ClassicView.display(
+                        ClassicView::display(
                             ui,
                             &mut self.input_task_list,
                             self.show_completed_tasks,

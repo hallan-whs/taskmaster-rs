@@ -3,7 +3,7 @@
 // ----------------------------------------------------------------------------
 
 use chrono::prelude::*;
-use eframe::egui;
+use eframe::egui::{self};
 use std::slice::Iter;
 
 // Holds the data for a task
@@ -15,7 +15,8 @@ pub struct Task {
     pub progress: u8,
     pub priority: u8,
     pub status: String,
-    pub due: NaiveDate,
+    pub due: Option<NaiveDate>,
+    pub show_modal: bool,
 }
 
 // Define default task
@@ -28,7 +29,8 @@ impl Default for Task {
             progress: 0,
             priority: 0,
             status: "".to_string(),
-            due: chrono::Local::now().date_naive(),
+            due: None,
+            show_modal: false,
         }
     }
 }
@@ -85,5 +87,22 @@ impl TaskList {
             TaskSort::Status => self .tasks .sort_by(|a, b| a.status.to_lowercase().cmp(&b.status.to_lowercase())),
             TaskSort::Due => self.tasks.sort_by(|a, b| a.due.cmp(&b.due)),
         }
+    }
+
+    // Adds a task to a task list, and executes any other required code
+    pub fn add(&mut self, task: Task) {
+        self.tasks.push(task);
+    }
+
+    // Returns whether or not the task list has any modals which are already open
+    pub fn has_any_modals(&self) -> bool {
+        let mut has_any_modals = false;
+        for task in self.tasks.iter() {
+            if task.show_modal {
+                has_any_modals = true;
+                break;
+            }
+        }
+        has_any_modals
     }
 }
