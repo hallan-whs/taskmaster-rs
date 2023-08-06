@@ -9,7 +9,7 @@ use crate::task::Task;
 use super::*;
 
 pub fn spawn(task: &mut Task, ctx: &egui::Context) {
-    egui::Window::new(task.summary.clone())
+    egui::Window::new("")
         .title_bar(false)
         .show(ctx, |ui| {
             // Set global ui scale

@@ -5,6 +5,8 @@
 // use it to display the task list.
 // ----------------------------------------------------------------------------
 
+use convert_case::Case;
+use convert_case::Casing;
 use eframe::egui;
 use egui::{RichText, Ui};
 
@@ -83,7 +85,7 @@ impl TaskView for ClassicView {
 
                         // If the task's priority isn't zero, display it
                         if task.priority != 0 {
-                            ui_elements::percentage_slider(ui, &mut task.priority);
+                            ui.add(egui::Slider::new(&mut task.priority, 0..=10));
                         }
 
                         // If the task's priority isn't zero, display it
@@ -92,13 +94,21 @@ impl TaskView for ClassicView {
                         }
 
                         // Create rich text containing the task's status
-                        let mut status_text = RichText::new(&task.status);
-                        if task.completed {
-                            status_text = status_text.strikethrough();
+                        if task.status != TaskStatus::None {
+                            
+                            egui::ComboBox::from_label("Status")
+                                .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
+                                .show_ui(ui, |ui| {
+                                    for _status in TaskStatus::iterator() {
+                                        // Iterate over possible statuses and show each as an option
+                                        ui.selectable_value(
+                                            &mut task.status,
+                                            *_status,
+                                            format!("{:?}", _status).to_case(Case::Title),
+                                        );
+                                    }
+                                });
                         }
-
-                        // Show task status
-                        ui.label(status_text);
                     });
                 });
             }

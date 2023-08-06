@@ -14,7 +14,7 @@ pub struct Task {
     pub description: String,
     pub progress: u8,
     pub priority: u8,
-    pub status: String,
+    pub status: TaskStatus,
     pub due: Option<NaiveDate>,
     pub show_modal: bool,
 }
@@ -28,41 +28,10 @@ impl Default for Task {
             description: "".to_string(),
             progress: 0,
             priority: 0,
-            status: "".to_string(),
+            status: TaskStatus::None,
             due: None,
             show_modal: false,
         }
-    }
-}
-
-// Enum used for sorting task lists
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
-pub enum TaskSort {
-    #[default]
-    None,
-    Summary,
-    Completed,
-    Description,
-    Progress,
-    Priority,
-    Status,
-    Due,
-}
-
-impl TaskSort {
-    // Returns an array of values of the enum to iterate over
-    pub fn iterator() -> Iter<'static, Self> {
-        return [
-            Self::None,
-            Self::Summary,
-            Self::Completed,
-            Self::Description,
-            Self::Progress,
-            Self::Priority,
-            Self::Status,
-            Self::Due,
-        ]
-        .iter();
     }
 }
 
@@ -84,7 +53,7 @@ impl TaskList {
             TaskSort::Description => self.tasks.sort_by(|a, b| { a.description.to_lowercase().cmp(&b.description.to_lowercase()) }),
             TaskSort::Progress => self.tasks.sort_by(|a, b| a.progress.cmp(&b.progress)),
             TaskSort::Priority => self.tasks.sort_by(|a, b| a.priority.cmp(&b.priority)),
-            TaskSort::Status => self .tasks .sort_by(|a, b| a.status.to_lowercase().cmp(&b.status.to_lowercase())),
+            TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).unwrap()),
             TaskSort::Due => self.tasks.sort_by(|a, b| a.due.cmp(&b.due)),
         }
     }
@@ -104,5 +73,62 @@ impl TaskList {
             }
         }
         has_any_modals
+    }
+}
+
+// The STATUS field of a VTODO can only have certain values.
+// This enum is used to choose between the valid values of this field.
+#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
+pub enum TaskStatus {
+    #[default]
+    None,
+    InProgress,
+    NeedsAction,
+    Completed,
+    Cancelled,
+} 
+
+impl TaskStatus {
+    // Returns an array of values of the enum, for other code to iterate over
+    pub fn iterator() -> Iter<'static, Self> {
+        return [
+            Self::None,
+            Self::InProgress,
+            Self::NeedsAction,
+            Self::Completed,
+            Self::Cancelled,
+        ]
+        .iter();
+    }
+}
+
+// Enum used for sorting task lists
+#[derive(Default, Debug, Clone, Copy, PartialEq)]
+pub enum TaskSort {
+    #[default]
+    None,
+    Summary,
+    Completed,
+    Description,
+    Progress,
+    Priority,
+    Status,
+    Due,
+}
+
+impl TaskSort {
+    // Returns an array of values of the enum, for other code to iterate over
+    pub fn iterator() -> Iter<'static, Self> {
+        return [
+            Self::None,
+            Self::Summary,
+            Self::Completed,
+            Self::Description,
+            Self::Progress,
+            Self::Priority,
+            Self::Status,
+            Self::Due,
+        ]
+        .iter();
     }
 }

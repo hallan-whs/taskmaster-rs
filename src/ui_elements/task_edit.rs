@@ -5,8 +5,11 @@
 // The lite version only has a field for task summary and completion
 // ----------------------------------------------------------------------------
 
-use eframe::egui::Ui;
+use convert_case::{Casing, Case};
+use eframe::egui::{Ui, self};
 use egui_extras::DatePickerButton;
+
+use crate::task::TaskStatus;
 
 use super::percentage_slider;
 
@@ -37,7 +40,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
             .labelled_by(progress_label.id);
 
         let priority_label = ui.label("Priority");
-        percentage_slider(ui, &mut task.priority)
+        ui.add(egui::Slider::new(&mut task.priority, 0..=10))
             .labelled_by(priority_label.id);
     });
 
@@ -47,11 +50,18 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
         .labelled_by(desc_label.id);
 
     // Task status input
-    ui.horizontal(|ui| {
-        let status_label = ui.label("Task status");
-        ui.text_edit_singleline(&mut task.status)
-            .labelled_by(status_label.id);
-    });
+    egui::ComboBox::from_label("Status")
+        .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
+        .show_ui(ui, |ui| {
+            for _status in TaskStatus::iterator() {
+                // Iterate over possible statuses and show each as an option
+                ui.selectable_value(
+                    &mut task.status,
+                    *_status,
+                    format!("{:?}", _status).to_case(Case::Title),
+                );
+            }
+        });
 
     ui.horizontal(|ui| {
         let mut has_due = task.due.is_some();
