@@ -4,7 +4,7 @@
 
 use chrono::prelude::*;
 use eframe::egui;
-use std::slice::Iter;
+use std::{slice::Iter, cmp::Ordering};
 
 // Holds the data for a task
 #[derive(Clone, Debug, PartialEq)]
@@ -16,6 +16,7 @@ pub struct Task {
     pub priority: u8,
     pub status: TaskStatus,
     pub due: Option<NaiveDate>,
+    pub created: NaiveDateTime,
     pub show_modal: bool,
 }
 
@@ -28,8 +29,9 @@ impl Default for Task {
             description: "".to_string(),
             progress: 0,
             priority: 0,
-            status: TaskStatus::None,
+            status: TaskStatus::InProgress,
             due: None,
+            created: chrono::Utc::now().naive_local(),
             show_modal: false,
         }
     }
@@ -64,7 +66,21 @@ impl TaskList {
             TaskSort::Progress => self.tasks.sort_by(|a, b| a.progress.cmp(&b.progress)),
             TaskSort::Priority => self.tasks.sort_by(|a, b| a.priority.cmp(&b.priority)),
             TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).unwrap()),
-            TaskSort::Due => self.tasks.sort_by(|a, b| a.due.cmp(&b.due)),
+            // This makes sure that tasks with due dates show up before ones without
+            // As well as making sure that the sooner the date, the higher up the task
+            TaskSort::Due => {
+                self.tasks.sort_by(|a, b| {
+                    if let Some(a_due) = a.due {
+                        if let Some(b_due) = b.due {
+                            a_due.cmp(&b_due)
+                        } else {
+                            Ordering::Less
+                        }
+                    } else {
+                        Ordering::Greater
+                    }
+                });
+            },
         }
     }
 
@@ -91,7 +107,6 @@ impl TaskList {
 #[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum TaskStatus {
     #[default]
-    None,
     InProgress,
     NeedsAction,
     Completed,
@@ -102,7 +117,6 @@ impl TaskStatus {
     // Returns an array of values of the enum, for other code to iterate over
     pub fn iterator() -> Iter<'static, Self> {
         return [
-            Self::None,
             Self::InProgress,
             Self::NeedsAction,
             Self::Completed,

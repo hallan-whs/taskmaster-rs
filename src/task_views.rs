@@ -89,8 +89,8 @@ impl TaskView for ClassicView {
                             ui_elements::percentage_slider(ui, &mut task.progress);
                         }
 
-                        // Create rich text containing the task's status
-                        if task.status != TaskStatus::None {
+                        // Create dropdown containing the task's status
+                        if task.status != TaskStatus::InProgress {
                             egui::ComboBox::from_label("Status")
                                 .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
                                 .show_ui(ui, |ui| {
@@ -104,6 +104,8 @@ impl TaskView for ClassicView {
                                     }
                                 });
                         }
+                        
+                        if task.status == TaskStatus::Completed { task.completed = true }
                     });
                 });
             }
