@@ -3,11 +3,11 @@
 // ----------------------------------------------------------------------------
 
 use chrono::prelude::*;
-use eframe::egui::{self};
+use eframe::egui;
 use std::slice::Iter;
 
 // Holds the data for a task
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Task {
     pub summary: String,
     pub completed: bool,
@@ -23,7 +23,7 @@ pub struct Task {
 impl Default for Task {
     fn default() -> Self {
         Self {
-            summary: "Do the dishes".to_string(),
+            summary: "New task".to_string(),
             completed: false,
             description: "".to_string(),
             progress: 0,
@@ -35,11 +35,21 @@ impl Default for Task {
     }
 }
 
-#[derive(Default)]
+#[derive(Debug, PartialEq)]
 pub struct TaskList {
     pub name: String,
     pub tasks: Vec<Task>,
     pub color: egui::Color32,
+}
+
+impl Default for TaskList {
+    fn default() -> Self {
+        TaskList {
+            name: "New list".to_string(),
+            tasks: vec![],
+            color: egui::Color32::DEBUG_COLOR,
+        }
+    }
 }
 
 impl TaskList {
@@ -86,7 +96,7 @@ pub enum TaskStatus {
     NeedsAction,
     Completed,
     Cancelled,
-} 
+}
 
 impl TaskStatus {
     // Returns an array of values of the enum, for other code to iterate over

@@ -5,8 +5,8 @@
 // The lite version only has a field for task summary and completion
 // ----------------------------------------------------------------------------
 
-use convert_case::{Casing, Case};
-use eframe::egui::{Ui, self};
+use convert_case::{Case, Casing};
+use eframe::egui::{self, Ui};
 use egui_extras::DatePickerButton;
 
 use crate::task::TaskStatus;
@@ -36,8 +36,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
     // Task progress and priority sliders
     ui.horizontal(|ui| {
         let progress_label = ui.label("Progress");
-        percentage_slider(ui, &mut task.progress)
-            .labelled_by(progress_label.id);
+        percentage_slider(ui, &mut task.progress).labelled_by(progress_label.id);
 
         let priority_label = ui.label("Priority");
         ui.add(egui::Slider::new(&mut task.priority, 0..=10))
@@ -80,7 +79,6 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
         } else {
             task.due = None;
         }
-
     });
 
     // Task complete checkbox

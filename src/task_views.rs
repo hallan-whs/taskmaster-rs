@@ -52,9 +52,7 @@ impl TaskView for ClassicView {
                     }
 
                     // Create rich text containing the task's description
-                    let mut desc_text = RichText::new(
-                        task.description.replace('\n', " ")
-                    );
+                    let mut desc_text = RichText::new(task.description.replace('\n', " "));
                     if task.completed {
                         desc_text = desc_text.strikethrough();
                     }
@@ -67,8 +65,6 @@ impl TaskView for ClassicView {
 
                     // Right-aligned, right-to-left UI segment
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-
-
                         // Click this to show a modal with a task's full details
                         // Doesn't spawn it if there's already one present
                         if ui.button("...").clicked() & !has_any_modals {
@@ -76,7 +72,7 @@ impl TaskView for ClassicView {
                         };
 
                         // If the button is clicked, mark task for removal
-                        keep = !ui.button("✖").clicked(); 
+                        keep = !ui.button("✖").clicked();
 
                         // If the task has a due date, display it
                         if let Some(mut due) = task.due {
@@ -95,7 +91,6 @@ impl TaskView for ClassicView {
 
                         // Create rich text containing the task's status
                         if task.status != TaskStatus::None {
-                            
                             egui::ComboBox::from_label("Status")
                                 .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
                                 .show_ui(ui, |ui| {

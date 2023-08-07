@@ -4,10 +4,12 @@
 // and runs the update loop as it is implemented below.
 // ----------------------------------------------------------------------------
 
+use std::path::Path;
+
 use eframe::egui;
 
-use crate::task_views::*;
 use crate::task::*;
+use crate::task_views::*;
 use crate::ui_elements;
 
 #[derive(Default)]
@@ -25,6 +27,7 @@ impl App {
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         Self {
             show_completed_tasks: false,
+            input_task_list: TaskList::from_file(Path::new("test.ics")).unwrap(), 
             ..Self::default() // Everything else is default
         }
     }
@@ -77,7 +80,7 @@ impl eframe::App for App {
                                 self.input_task_list.add(Task {
                                     summary: self.input_task.clone().summary,
                                     completed: self.input_task.clone().completed,
-                                    .. Task::default()
+                                    ..Task::default()
                                 });
 
                                 // Enable showing completed tasks if the task
