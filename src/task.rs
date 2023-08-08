@@ -4,7 +4,7 @@
 
 use chrono::prelude::*;
 use eframe::egui;
-use std::{cmp::Ordering, slice::Iter};
+use std::{cmp::Ordering, slice::Iter, cell::RefCell, rc::Rc};
 
 // Holds the data for a task
 #[derive(Clone, Debug, PartialEq)]
@@ -18,7 +18,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub due: Option<NaiveDate>,
     pub created: NaiveDateTime,
-    pub show_modal: bool,
+    pub show_modal: Rc<RefCell<bool>>,
 }
 
 // Define default task
@@ -34,7 +34,7 @@ impl Default for Task {
             status: TaskStatus::InProgress,
             due: None,
             created: chrono::Utc::now().naive_local(),
-            show_modal: false,
+            show_modal: Rc::new(RefCell::new(false)),
         }
     }
 }
@@ -95,7 +95,7 @@ impl TaskList {
     pub fn has_any_modals(&self) -> bool {
         let mut has_any_modals = false;
         for task in self.tasks.iter() {
-            if task.show_modal {
+            if *task.show_modal.borrow() {
                 has_any_modals = true;
                 break;
             }

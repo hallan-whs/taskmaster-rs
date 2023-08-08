@@ -9,7 +9,11 @@ use crate::task::Task;
 use super::*;
 
 pub fn spawn(task: &mut Task, ctx: &egui::Context) {
-    egui::Window::new("").title_bar(false).show(ctx, |ui| {
+    egui::Window::new(format!("Edit task: {}", task.summary))
+        .id(task.uuid.to_string().into())
+        .open(&mut task.show_modal.clone().borrow_mut())
+        .show(ctx, |ui| {
+
         // Set global ui scale
         ctx.set_pixels_per_point(1.75);
 
@@ -27,14 +31,6 @@ pub fn spawn(task: &mut Task, ctx: &egui::Context) {
                     // Task editing UI
                     task_edit::full(ui, task);
                 });
-
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
-                    ui.with_layout(egui::Layout::top_down(egui::Align::Max), |ui| {
-                        if ui.button("✖").clicked() {
-                            task.show_modal = false;
-                        }
-                    })
-                })
             })
         })
     });

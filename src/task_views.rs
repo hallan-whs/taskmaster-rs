@@ -26,8 +26,6 @@ pub struct ClassicView;
 
 impl TaskView for ClassicView {
     fn display(ui: &mut Ui, task_list: &mut TaskList, show_completed_tasks: bool) {
-        let has_any_modals = task_list.has_any_modals();
-
         let mut last_task_uuid = 0u128;
         if let Some(lasttask) = task_list.tasks.last() {
             last_task_uuid = lasttask.uuid.as_u128();
@@ -79,8 +77,8 @@ impl TaskView for ClassicView {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         // Click this to show a modal with a task's full details
                         // Doesn't spawn it if there's already one present
-                        if ui.button("...").clicked() & !has_any_modals {
-                            task.show_modal = true;
+                        if ui.button("...").clicked() {
+                            *task.show_modal.borrow_mut() = true;
                         };
 
                         // If the button is clicked, mark task for removal
@@ -133,7 +131,7 @@ impl TaskView for ClassicView {
             }
 
             // Spawn a modal if told to
-            if task.show_modal {
+            if *task.show_modal.borrow() {
                 ui_elements::task_modal::spawn(task, ui.ctx());
             }
 
