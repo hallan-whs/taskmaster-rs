@@ -29,7 +29,7 @@ impl TaskView for ClassicView {
         let has_any_modals = task_list.has_any_modals();
 
         let mut last_task_uuid = 0u128;
-        if let Some (lasttask) = task_list.tasks.last() {
+        if let Some(lasttask) = task_list.tasks.last() {
             last_task_uuid = lasttask.uuid.as_u128();
         }
 
@@ -119,7 +119,6 @@ impl TaskView for ClassicView {
                                     }
                                 });
                         }
-
                     });
                 });
                 // If the currently addressed task is not the final task in the list,

@@ -256,9 +256,9 @@ X-PUBLISHED-TTL:PT4H",
             ical_text.push_str(format!("UID:{}\n", task.uuid).as_str());
 
             // Gets the current date and converts it to be compatible with the ical format
-            let nowstr = datetime_to_ical_str(chrono::Utc::now().naive_utc());
+            let nowstr = chrono::Utc::now().naive_utc().format("%Y%m%dT%H%M%S");
             // Gets the date the task was created and converts it as well
-            let createdstr = datetime_to_ical_str(task.created);
+            let createdstr = task.created.format("%Y%m%dT%H%M%S");
 
             // Add metadata dates for the task
             ical_text.push_str(format!("CREATED:{}\n", createdstr).as_str());
@@ -273,7 +273,8 @@ X-PUBLISHED-TTL:PT4H",
                 ical_text.push_str(
                     format!(
                         "DUE:{}\n",
-                        datetime_to_ical_str(due.and_time(chrono::NaiveTime::default()))
+                        due.and_time(chrono::NaiveTime::default())
+                            .format("%Y%m%dT%H%M%S")
                     )
                     .to_string()
                     .as_str(),
@@ -317,23 +318,6 @@ X-PUBLISHED-TTL:PT4H",
         // We're all good, return a reference to the file
         ical_text
     }
-}
-
-/// Takes a chrono DateTime and converts it to a string that the calendar file can read.
-///
-/// Examples:
-/// ```
-/// use taskmaster_rs::parser::*;
-///
-/// let date1 = chrono::NaiveDateTime::parse_from_str("2023-08-08 13:08:20", "%Y-%m-%d %H:%M:%S");
-/// let date2 = chrono::NaiveDateTime::parse_from_str("1337-06-09 04:20:00", "%Y-%m-%d %H:%M:%S");
-/// let date3 = chrono::NaiveDateTime::from_timestamp_millis(0); // Unix epoch, or 1st Jan 1970 00:00
-/// assert_eq!(datetime_to_ical_str(date1.unwrap()), "20230808T130820");
-/// assert_eq!(datetime_to_ical_str(date2.unwrap()), "13370609T042000");
-/// assert_eq!(datetime_to_ical_str(date3.unwrap()), "19700101T000000");
-/// ```
-pub fn datetime_to_ical_str(datetime: chrono::NaiveDateTime) -> String {
-    datetime.format("%Y%m%dT%H%M%S").to_string()
 }
 
 // Possible errors for parsing from a file
