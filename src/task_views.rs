@@ -65,13 +65,13 @@ impl TaskView for ClassicView {
                         desc_text = desc_text.strikethrough();
                     }
 
+                    // Create a checkbox with previously created text
+                    ui.checkbox(&mut task.completed, task_text);
+
                     if !task.description.is_empty() {
                         // Show task description
                         ui.label(desc_text);
                     }
-
-                    // Create a checkbox with previously created text
-                    ui.checkbox(&mut task.completed, task_text);
 
                     // Right-aligned, right-to-left UI segment
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
