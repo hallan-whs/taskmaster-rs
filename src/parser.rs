@@ -3,9 +3,9 @@
 // ----------------------------------------------------------------------------
 
 use std::{
-    fs::File, 
+    fs::File,
     io::{BufReader, Write},
-    path::Path
+    path::Path,
 };
 
 use eframe::egui;
@@ -23,7 +23,7 @@ impl TaskList {
     /// let a = TaskList::from_file(Path::new("test.ics"));
     /// let afmt = format!("{:?}", a);
     ///
-    /// assert_eq!(afmt, 
+    /// assert_eq!(afmt,
     /// "Ok(TaskList { name: \"T_tmtest\", tasks: [Task { summary: \"Task 1\", \
     /// completed: false, description: \"description\\n\", progress: 47, priority: 9, \
     /// status: NeedsAction, due: None, show_modal: false }], color: Color32([83, 130, 163, 255]) })"
@@ -61,16 +61,14 @@ impl TaskList {
                     // Set calendar color
                     "X-APPLE-CALENDAR-COLOR" => {
                         if let Ok(rgb) = hex_rgb::convert_hexcode_to_rgb(value) {
-                            list.color = egui::Color32::from_rgb(rgb.red, rgb.green, rgb.blue);                       
+                            list.color = egui::Color32::from_rgb(rgb.red, rgb.green, rgb.blue);
                         }
-                    },
+                    }
                     // Checks for a BEGIN statement
                     "BEGIN" => {
                         match value.as_str() {
                             // If it's starting a new task, add a task to the vector of tasks
-                            "VTODO" => {
-                                tasks.push(Task::default())
-                            },
+                            "VTODO" => tasks.push(Task::default()),
                             // If it's just starting the file, do nothing
                             "VCALENDAR" => (),
                             // If it's starting anything else, return an error
@@ -84,10 +82,12 @@ impl TaskList {
                     // Set the currently addressed task's due date
                     "DUE" => {
                         let datestr = value;
-                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S") {
+                        if let Ok(date) =
+                            chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S")
+                        {
                             tasks[task_counter].due = Some(date.date());
                         } else {
-                            return Err(ParseFromFileError::InvalidField)
+                            return Err(ParseFromFileError::InvalidField);
                         }
                     }
                     // Set the currently addressed task's priority
@@ -115,15 +115,14 @@ impl TaskList {
                             "COMPLETED" => {
                                 task.completed = true;
                                 TaskStatus::Completed
-                            },
+                            }
                             "CANCELLED" => TaskStatus::Cancelled,
                             _ => return Err(ParseFromFileError::InvalidStatus),
                         }
                     }
                     // Set the currently addressed task's description
                     "DESCRIPTION" => {
-                        tasks[task_counter].description = value
-                            .replace("\\n", "\n");
+                        tasks[task_counter].description = value.replace("\\n", "\n");
                     }
                     // If the file says that the task description is complete,
                     // iterate the task counter so that it can be used to address
@@ -136,10 +135,12 @@ impl TaskList {
                     // Store the task's creation date
                     "CREATED" => {
                         let datestr = value;
-                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S") {
+                        if let Ok(date) =
+                            chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S")
+                        {
                             tasks[task_counter].created = date;
                         } else {
-                            return Err(ParseFromFileError::InvalidField)
+                            return Err(ParseFromFileError::InvalidField);
                         }
                     }
                     // If the line isn't any of the above, just do nothing
@@ -156,20 +157,29 @@ impl TaskList {
     }
 
     pub fn to_file(&self, path: &Path) -> std::io::Result<File> {
-
         // Initiate text that will eventually be added to the calendar file
-        // As well as adding some initial variables 
-        // {:X} in a format string changes decimal numbers to hexadecimal
-        let mut ical_text = format!("\
+        // As well as adding some initial variables
+        let mut ical_text = format!(
+            "\
 BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
-PRODID:-//ical-rs//github.com//
+PRODID:-//taskmaster-rs//github.com//
 X-WR-CALNAME:{}
 X-APPLE-CALENDAR-COLOR:{}
 REFRESH-INTERVAL;VALUE=DURATION:PT4H
 X-PUBLISHED-TTL:PT4H \
-        ", self.name, format!("#{:X}{:X}{:X}", self.color.r(), self.color.g(), self.color.b()));
+        ",
+            self.name,
+            // Convert the TaskList's color to hexadecimal and insert it into the string
+            // {:X} in a format string changes decimal numbers to hexadecimal
+            format!(
+                "#{:X}{:X}{:X}",
+                self.color.r(),
+                self.color.g(),
+                self.color.b()
+            )
+        );
 
         // Add data for every todo item
         for task in &self.tasks {
@@ -193,9 +203,14 @@ X-PUBLISHED-TTL:PT4H \
 
             // Adds task due date
             if let Some(due) = task.due {
-                ical_text.push_str(format!("DUE:{}\n", 
-                    datetime_to_ical_str(due.and_time(chrono::NaiveTime::default()))
-                ).to_string().as_str());
+                ical_text.push_str(
+                    format!(
+                        "DUE:{}\n",
+                        datetime_to_ical_str(due.and_time(chrono::NaiveTime::default()))
+                    )
+                    .to_string()
+                    .as_str(),
+                );
             }
 
             // Adds task priority if it's not 0
@@ -219,17 +234,19 @@ X-PUBLISHED-TTL:PT4H \
                     TaskStatus::Cancelled => statstr.push_str("CANCELLED\n"),
                 }
                 ical_text.push_str(&statstr);
-            } 
+            }
             // Adds task description if it's not empty
             if task.description != "" {
-                ical_text.push_str(format!("DESCRIPTION:{}\n", &task.description.replace("\n", "\\n")).as_str());
+                ical_text.push_str(
+                    format!("DESCRIPTION:{}\n", &task.description.replace("\n", "\\n")).as_str(),
+                );
             }
             // Ends the task data
             ical_text.push_str("END:VTODO\n");
         }
         // Ends the file
         ical_text.push_str("END:VCALENDAR\n");
-        
+
         // Creates a file at the specified path and writes the data to it
         // Returns an error if the file already exists
         if File::open(path).is_ok() {
@@ -238,7 +255,7 @@ X-PUBLISHED-TTL:PT4H \
         // Both of these functions return an error if they fail
         let mut f = File::create(path)?;
         f.write_all(ical_text.as_bytes())?;
-        
+
         // We're all good, return a reference to the file
         Ok(f)
     }

@@ -4,7 +4,7 @@
 
 use chrono::prelude::*;
 use eframe::egui;
-use std::{slice::Iter, cmp::Ordering};
+use std::{cmp::Ordering, slice::Iter};
 
 // Holds the data for a task
 #[derive(Clone, Debug, PartialEq)]

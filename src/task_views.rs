@@ -104,8 +104,10 @@ impl TaskView for ClassicView {
                                     }
                                 });
                         }
-                        
-                        if task.status == TaskStatus::Completed { task.completed = true }
+
+                        if task.status == TaskStatus::Completed {
+                            task.completed = true
+                        }
                     });
                 });
             }

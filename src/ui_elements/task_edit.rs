@@ -84,5 +84,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
     // Task complete checkbox
     ui.checkbox(&mut task.completed, "Task is complete");
 
-    if task.status == TaskStatus::Completed { task.completed = true }
+    if task.status == TaskStatus::Completed {
+        task.completed = true
+    }
 }
