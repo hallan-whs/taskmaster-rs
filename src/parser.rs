@@ -26,6 +26,7 @@ impl TaskList {
     ///     TaskList {
     ///         name: "test".to_string(),
     ///         tasks: vec![Task {
+    ///             uuid: list.tasks[0].uuid, // This is a bit hacky but I'll sort it eventually
     ///             summary: "Task 1".to_string(),
     ///             completed: false,
     ///             description: "description\n".to_string(),

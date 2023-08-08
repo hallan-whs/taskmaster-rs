@@ -28,6 +28,13 @@ impl TaskView for ClassicView {
     fn display(ui: &mut Ui, task_list: &mut TaskList, show_completed_tasks: bool) {
         let has_any_modals = task_list.has_any_modals();
 
+        let mut last_task_uuid = 0u128;
+        if let Some (lasttask) = task_list.tasks.last() {
+            last_task_uuid = lasttask.uuid.as_u128();
+        }
+
+        ui.separator();
+
         // Iterates over each task in the task list, keeping or removing each task
         // based on a returned boolean which is determined within each iteration
         // In this case, the returned boolean indicates whether the task's
@@ -52,16 +59,21 @@ impl TaskView for ClassicView {
                     }
 
                     // Create rich text containing the task's description
-                    let mut desc_text = RichText::new(task.description.replace('\n', " "));
+                    let mut desc_text = task.description.replace('\n', " ");
+                    desc_text.truncate(20);
+                    let desc_text = desc_text.trim().to_string() + "...";
+                    let mut desc_text = RichText::new(desc_text);
                     if task.completed {
                         desc_text = desc_text.strikethrough();
                     }
 
+                    if !task.description.is_empty() {
+                        // Show task description
+                        ui.label(desc_text);
+                    }
+
                     // Create a checkbox with previously created text
                     ui.checkbox(&mut task.completed, task_text);
-
-                    // Show task description
-                    ui.label(desc_text);
 
                     // Right-aligned, right-to-left UI segment
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -108,11 +120,17 @@ impl TaskView for ClassicView {
                                 });
                         }
 
-                        if task.status == TaskStatus::Completed {
-                            task.completed = true
-                        }
                     });
                 });
+                // If the currently addressed task is not the final task in the list,
+                // Draw a separator between the tasks
+                if task.uuid.as_u128() != last_task_uuid {
+                    ui.separator();
+                }
+
+                if task.status == TaskStatus::Completed {
+                    task.completed = true
+                }
             }
 
             // Spawn a modal if told to
