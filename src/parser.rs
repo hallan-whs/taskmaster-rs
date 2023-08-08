@@ -30,31 +30,43 @@ impl TaskList {
     /// );
     /// ```
     pub fn from_file(path: &Path) -> Result<TaskList, ParseFromFileError> {
-        let file = BufReader::new(File::open(path).unwrap());
+        let file = match File::open(path) {
+            Ok(f) => f,
+            Err(_) => return Err(ParseFromFileError::InvalidFile),
+        };
 
-        let reader = ical::PropertyParser::from_reader(file);
+        let reader = BufReader::new(file);
+
+        let lines = ical::PropertyParser::from_reader(reader);
 
         let mut list: TaskList = TaskList::default();
         let mut tasks: Vec<Task> = vec![];
         let mut task_counter = 0usize;
 
         // Iterate through each line parsed from the file
-        for line in reader {
+        for line in lines {
             // If the line is valid
             if let Ok(property) = line {
+                // Makes sure the line is saying something
+                let value;
+                if let Some(val) = property.value {
+                    value = val.to_string();
+                } else {
+                    return Err(ParseFromFileError::InvalidField);
+                }
                 // Checks what the line is saying
                 match property.name.as_str() {
                     // Set calendar name
-                    "X-WR-CALNAME" => list.name = property.value.unwrap(),
+                    "X-WR-CALNAME" => list.name = value,
                     // Set calendar color
                     "X-APPLE-CALENDAR-COLOR" => {
-                        if let Ok(rgb) = hex_rgb::convert_hexcode_to_rgb(property.value.unwrap()) {
+                        if let Ok(rgb) = hex_rgb::convert_hexcode_to_rgb(value) {
                             list.color = egui::Color32::from_rgb(rgb.red, rgb.green, rgb.blue);                       
                         }
                     },
                     // Checks for a BEGIN statement
                     "BEGIN" => {
-                        match property.value.unwrap().as_str() {
+                        match value.as_str() {
                             // If it's starting a new task, add a task to the vector of tasks
                             "VTODO" => {
                                 tasks.push(Task::default())
@@ -67,25 +79,37 @@ impl TaskList {
                     }
                     // Set the currently addressed task's summary
                     "SUMMARY" => {
-                        tasks[task_counter].summary = property.value.unwrap();
+                        tasks[task_counter].summary = value;
                     }
                     // Set the currently addressed task's due date
                     "DUE" => {
-                        let datestr = property.value.unwrap();
-                        tasks[task_counter].due = Some(chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S").unwrap().date());
+                        let datestr = value;
+                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S") {
+                            tasks[task_counter].due = Some(date.date());
+                        } else {
+                            return Err(ParseFromFileError::InvalidField)
+                        }
                     }
                     // Set the currently addressed task's priority
                     "PRIORITY" => {
-                        tasks[task_counter].priority = property.value.unwrap().parse().unwrap();
+                        if let Ok(priority) = value.parse() {
+                            tasks[task_counter].priority = priority;
+                        } else {
+                            return Err(ParseFromFileError::InvalidField);
+                        }
                     }
                     // Set the currently addressed task's completion percent
                     "PERCENT-COMPLETE" => {
-                        tasks[task_counter].progress = property.value.unwrap().parse().unwrap();
+                        if let Ok(progress) = value.parse() {
+                            tasks[task_counter].progress = progress;
+                        } else {
+                            return Err(ParseFromFileError::InvalidField);
+                        }
                     }
                     // Set the currently addressed task's status
                     "STATUS" => {
                         let task = &mut tasks[task_counter];
-                        task.status = match property.value.unwrap().as_str() {
+                        task.status = match value.as_str() {
                             "IN-PROGRESS" => TaskStatus::InProgress,
                             "NEEDS-ACTION" => TaskStatus::NeedsAction,
                             "COMPLETED" => {
@@ -98,21 +122,25 @@ impl TaskList {
                     }
                     // Set the currently addressed task's description
                     "DESCRIPTION" => {
-                        tasks[task_counter].description = property.value.unwrap()
+                        tasks[task_counter].description = value
                             .replace("\\n", "\n");
                     }
                     // If the file says that the task description is complete,
                     // iterate the task counter so that it can be used to address
                     // the task that is added next (if any).
                     "END" => {
-                        if Some("VTODO".to_string()) == property.value {
+                        if value == "VTODO".to_string() {
                             task_counter += 1;
                         }
                     }
                     // Store the task's creation date
                     "CREATED" => {
-                        let datestr = property.value.unwrap();
-                        tasks[task_counter].created = chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S").unwrap();
+                        let datestr = value;
+                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S") {
+                            tasks[task_counter].created = date;
+                        } else {
+                            return Err(ParseFromFileError::InvalidField)
+                        }
                     }
                     // If the line isn't any of the above, just do nothing
                     _ => (),
@@ -164,7 +192,11 @@ X-PUBLISHED-TTL:PT4H \
             ical_text.push_str(format!("SUMMARY:{}\n", &task.summary).as_str());
 
             // Adds task due date
-            ical_text.push_str(format!("DUE:{}\n", datetime_to_ical_str(task.due.unwrap().and_time(chrono::NaiveTime::default()))).to_string().as_str());
+            if let Some(due) = task.due {
+                ical_text.push_str(format!("DUE:{}\n", 
+                    datetime_to_ical_str(due.and_time(chrono::NaiveTime::default()))
+                ).to_string().as_str());
+            }
 
             // Adds task priority if it's not 0
             if task.priority != 0 {
@@ -231,4 +263,5 @@ pub enum ParseFromFileError {
     InvalidFile,
     InvalidStatus,
     NonTaskItem,
+    InvalidField,
 }
