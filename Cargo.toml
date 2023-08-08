@@ -7,11 +7,12 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.*"
+colorsys = "0.6.7"
 convert_case = "0.6.0"
-eframe = { version = "0.22.*" }
-egui_extras = { version = "0.22.*", features = ["datepicker"] }
-hex-rgb = "0.1.1"
+eframe = { version = "0.22.0" }
+egui_extras = { version = "0.22.0", features = ["datepicker"] }
 ical = { version = "0.8.0", features = ["generator"] }
+wildmatch = "2.1.1"
 
 [dependencies.uuid]
 version = "1.4.1"

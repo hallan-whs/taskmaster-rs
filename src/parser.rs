@@ -2,11 +2,7 @@
 // Functionality for parsing a TaskList to or from an iCal file with VTODOs.
 // ----------------------------------------------------------------------------
 
-use std::{
-    fs::File,
-    io::{BufReader, Write},
-    path::Path,
-};
+use std::{fs::File, io, path::Path};
 
 use eframe::egui;
 
@@ -15,27 +11,42 @@ use crate::task::*;
 impl TaskList {
     /// Converts an iCal file to a TaskList.
     ///
+    /// Example:
     /// ```
-    /// use taskmaster_rs::task::TaskList;
+    /// use taskmaster_rs::task::*;
     /// use std::path::Path;
     /// use std::fs;
     ///
-    /// let a = TaskList::from_file(Path::new("test.ics"));
-    /// let afmt = format!("{:?}", a);
+    /// use eframe::egui::Color32;
     ///
-    /// assert_eq!(afmt,
-    /// "Ok(TaskList { name: \"T_tmtest\", tasks: [Task { summary: \"Task 1\", \
-    /// completed: false, description: \"description\\n\", progress: 47, priority: 9, \
-    /// status: NeedsAction, due: None, show_modal: false }], color: Color32([83, 130, 163, 255]) })"
+    /// let list = TaskList::from_ical_file(Path::new("test.ics")).unwrap();
+    ///
+    /// assert_eq!(
+    ///     list,
+    ///     TaskList {
+    ///         name: "test".to_string(),
+    ///         tasks: vec![Task {
+    ///             summary: "Task 1".to_string(),
+    ///             completed: false,
+    ///             description: "description\n".to_string(),
+    ///             progress: 47,
+    ///             priority: 9,
+    ///             status: TaskStatus::NeedsAction,
+    ///             due: Some(chrono::NaiveDate::parse_from_str("20230825", "%Y%m%d").unwrap()),
+    ///             show_modal: false,
+    ///             created: chrono::NaiveDateTime::parse_from_str("20230801151208", "%Y%m%d%H%M%S").unwrap()
+    ///         }],
+    ///         color: Color32::from_rgb(83, 130, 163)
+    ///     }
     /// );
     /// ```
-    pub fn from_file(path: &Path) -> Result<TaskList, ParseFromFileError> {
+    pub fn from_ical_file(path: &Path) -> Result<TaskList, ParseFromFileError> {
         let file = match File::open(path) {
             Ok(f) => f,
             Err(_) => return Err(ParseFromFileError::InvalidFile),
         };
 
-        let reader = BufReader::new(file);
+        let reader = io::BufReader::new(file);
 
         let lines = ical::PropertyParser::from_reader(reader);
 
@@ -60,8 +71,13 @@ impl TaskList {
                     "X-WR-CALNAME" => list.name = value,
                     // Set calendar color
                     "X-APPLE-CALENDAR-COLOR" => {
-                        if let Ok(rgb) = hex_rgb::convert_hexcode_to_rgb(value) {
-                            list.color = egui::Color32::from_rgb(rgb.red, rgb.green, rgb.blue);
+                        // Conver ical hex color to rgb color that can be stored in a Task
+                        if let Ok(rgb) = colorsys::Rgb::from_hex_str(&value) {
+                            list.color = egui::Color32::from_rgb(
+                                rgb.red().round() as u8,
+                                rgb.green().round() as u8,
+                                rgb.blue().round() as u8,
+                            );
                         }
                     }
                     // Checks for a BEGIN statement
@@ -128,7 +144,7 @@ impl TaskList {
                     // iterate the task counter so that it can be used to address
                     // the task that is added next (if any).
                     "END" => {
-                        if value == "VTODO".to_string() {
+                        if value == *"VTODO".to_string() {
                             task_counter += 1;
                         }
                     }
@@ -156,24 +172,66 @@ impl TaskList {
         Ok(list)
     }
 
-    pub fn to_file(&self, path: &Path) -> std::io::Result<File> {
+    /// Converts a TaskList to a string containing the contents of a potential iCal file.
+    /// This lets whatever is implementing the function handle writing it to a file,
+    /// or using the string for any other purpose.
+    ///
+    /// Example:
+    /// ```
+    /// use taskmaster_rs::task::*;
+    /// use std::path::Path;
+    /// use std::fs;
+    ///
+    /// use eframe::egui::Color32;
+    ///
+    /// let liststr = TaskList::from_ical_file(Path::new("test.ics")).unwrap()
+    ///     .to_ical_string();
+    ///
+    /// println!("{}", liststr.trim());
+    /// assert!(
+    /// // WildMatch lets you check if two strings are matching non-exactly using wildcards,
+    /// // which is useful here because the UUID and creation time of a task are different each time
+    ///     wildmatch::WildMatch::new(
+    ///"BEGIN:VCALENDAR
+    ///VERSION:2.0
+    ///CALSCALE:GREGORIAN
+    ///PRODID:-//taskmaster-rs//github.com//
+    ///X-WR-CALNAME:test
+    ///X-APPLE-CALENDAR-COLOR:#5382A3
+    ///REFRESH-INTERVAL;VALUE=DURATION:PT4H
+    ///X-PUBLISHED-TTL:PT4H
+    ///BEGIN:VTODO
+    ///UID:????????-????-????-????-????????????
+    ///CREATED:20230801T151208
+    ///LAST-MODIFIED:????????T??????
+    ///DTSTAMP:????????T??????
+    ///SUMMARY:Task 1
+    ///DUE:20230825T000000
+    ///PRIORITY:9
+    ///PERCENT-COMPLETE:47
+    ///STATUS:NEEDS-ACTION
+    ///DESCRIPTION:description\\n
+    ///END:VTODO
+    ///END:VCALENDAR").matches(liststr.trim())
+    /// );
+    /// ```
+    pub fn to_ical_string(&self) -> String {
         // Initiate text that will eventually be added to the calendar file
-        // As well as adding some initial variables
+        // As well as adding some initial variables via a format string
         let mut ical_text = format!(
-            "\
-BEGIN:VCALENDAR
+            "BEGIN:VCALENDAR
 VERSION:2.0
 CALSCALE:GREGORIAN
 PRODID:-//taskmaster-rs//github.com//
 X-WR-CALNAME:{}
 X-APPLE-CALENDAR-COLOR:{}
 REFRESH-INTERVAL;VALUE=DURATION:PT4H
-X-PUBLISHED-TTL:PT4H \
-        ",
+X-PUBLISHED-TTL:PT4H",
+            // Now the variables that are substituted into the {}s are specified
             self.name,
             // Convert the TaskList's color to hexadecimal and insert it into the string
             // {:X} in a format string changes decimal numbers to hexadecimal
-            format!(
+            format_args!(
                 "#{:X}{:X}{:X}",
                 self.color.r(),
                 self.color.g(),
@@ -186,7 +244,7 @@ X-PUBLISHED-TTL:PT4H \
             // Begins the task data
             ical_text.push_str("\nBEGIN:VTODO\n");
             // Generates a unique UID for the task
-            ical_text.push_str(format!("UID:{}\n", uuid::Uuid::new_v4().to_string()).as_str());
+            ical_text.push_str(format!("UID:{}\n", uuid::Uuid::new_v4()).as_str());
 
             // Gets the current date and converts it to be compatible with the ical format
             let nowstr = datetime_to_ical_str(chrono::Utc::now().naive_utc());
@@ -236,9 +294,9 @@ X-PUBLISHED-TTL:PT4H \
                 ical_text.push_str(&statstr);
             }
             // Adds task description if it's not empty
-            if task.description != "" {
+            if !task.description.is_empty() {
                 ical_text.push_str(
-                    format!("DESCRIPTION:{}\n", &task.description.replace("\n", "\\n")).as_str(),
+                    format!("DESCRIPTION:{}\n", &task.description.replace('\n', "\\n")).as_str(),
                 );
             }
             // Ends the task data
@@ -247,31 +305,26 @@ X-PUBLISHED-TTL:PT4H \
         // Ends the file
         ical_text.push_str("END:VCALENDAR\n");
 
-        // Creates a file at the specified path and writes the data to it
-        // Returns an error if the file already exists
-        if File::open(path).is_ok() {
-            return Err(std::io::ErrorKind::AlreadyExists.into());
-        }
-        // Both of these functions return an error if they fail
-        let mut f = File::create(path)?;
-        f.write_all(ical_text.as_bytes())?;
-
         // We're all good, return a reference to the file
-        Ok(f)
+        ical_text
     }
 }
 
-// Takes a chrono DateTime and converts it to a string that the calendar file can read
-fn datetime_to_ical_str(datetime: chrono::NaiveDateTime) -> String {
-    let datestr = datetime.date().to_string().replace("-", "");
-
-    let mut timestr = datetime.time().to_string();
-    if let Some(pos) = timestr.find(".") {
-        timestr.truncate(pos);
-    }
-    let timestr = timestr.replace(":", "");
-
-    format!("{}T{}", datestr, timestr)
+/// Takes a chrono DateTime and converts it to a string that the calendar file can read.
+///
+/// Examples:
+/// ```
+/// use taskmaster_rs::parser::*;
+///
+/// let date1 = chrono::NaiveDateTime::parse_from_str("2023-08-08 13:08:20", "%Y-%m-%d %H:%M:%S");
+/// let date2 = chrono::NaiveDateTime::parse_from_str("1337-06-09 04:20:00", "%Y-%m-%d %H:%M:%S");
+/// let date3 = chrono::NaiveDateTime::from_timestamp_millis(0); // Unix epoch, or 1st Jan 1970 00:00
+/// assert_eq!(datetime_to_ical_str(date1.unwrap()), "20230808T130820");
+/// assert_eq!(datetime_to_ical_str(date2.unwrap()), "13370609T042000");
+/// assert_eq!(datetime_to_ical_str(date3.unwrap()), "19700101T000000");
+/// ```
+pub fn datetime_to_ical_str(datetime: chrono::NaiveDateTime) -> String {
+    datetime.format("%Y%m%dT%H%M%S").to_string()
 }
 
 // Possible errors for parsing from a file
