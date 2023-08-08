@@ -26,7 +26,7 @@ impl TaskList {
     ///     TaskList {
     ///         name: "test".to_string(),
     ///         tasks: vec![Task {
-    ///             uuid: list.tasks[0].uuid, // This is a bit hacky but I'll sort it eventually
+    ///             uuid: uuid::Uuid::parse_str("ae02186d-10ae-404f-a4c9-450e06ea77cf").unwrap(),
     ///             summary: "Task 1".to_string(),
     ///             completed: false,
     ///             description: "description\n".to_string(),
@@ -90,6 +90,14 @@ impl TaskList {
                             "VCALENDAR" => (),
                             // If it's starting anything else, return an error
                             _ => return Err(ParseFromFileError::NonTaskItem),
+                        }
+                    }
+                    // If the task has a valid UUID in the file, then use that as the generated task's UUID.
+                    // iCal allows IDs that don't follow the UUID format, so if the ID isn't a uuid, just
+                    // use the UUID that is generated when a Task is created.
+                    "UID" => {
+                        if let Ok(parsed_uuid) = uuid::Uuid::parse_str(value.as_str()) {
+                            tasks[task_counter].uuid = parsed_uuid
                         }
                     }
                     // Set the currently addressed task's summary
@@ -191,7 +199,7 @@ impl TaskList {
     /// println!("{}", liststr.trim());
     /// assert!(
     /// // WildMatch lets you check if two strings are matching non-exactly using wildcards,
-    /// // which is useful here because the UUID and creation time of a task are different each time
+    /// // which is useful here because the creation and modification time of a task is always different
     ///     wildmatch::WildMatch::new(
     ///"BEGIN:VCALENDAR
     ///VERSION:2.0
@@ -202,7 +210,7 @@ impl TaskList {
     ///REFRESH-INTERVAL;VALUE=DURATION:PT4H
     ///X-PUBLISHED-TTL:PT4H
     ///BEGIN:VTODO
-    ///UID:????????-????-????-????-????????????
+    ///UID:ae02186d-10ae-404f-a4c9-450e06ea77cf
     ///CREATED:20230801T151208
     ///LAST-MODIFIED:????????T??????
     ///DTSTAMP:????????T??????
