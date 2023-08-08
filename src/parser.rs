@@ -244,7 +244,7 @@ X-PUBLISHED-TTL:PT4H",
             // Begins the task data
             ical_text.push_str("\nBEGIN:VTODO\n");
             // Generates a unique UID for the task
-            ical_text.push_str(format!("UID:{}\n", uuid::Uuid::new_v4()).as_str());
+            ical_text.push_str(format!("UID:{}\n", task.uuid).as_str());
 
             // Gets the current date and converts it to be compatible with the ical format
             let nowstr = datetime_to_ical_str(chrono::Utc::now().naive_utc());

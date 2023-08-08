@@ -9,6 +9,7 @@ use std::{cmp::Ordering, slice::Iter};
 // Holds the data for a task
 #[derive(Clone, Debug, PartialEq)]
 pub struct Task {
+    pub uuid: uuid::Uuid,
     pub summary: String,
     pub completed: bool,
     pub description: String,
@@ -24,6 +25,7 @@ pub struct Task {
 impl Default for Task {
     fn default() -> Self {
         Self {
+            uuid: uuid::Uuid::new_v4(),
             summary: "New task".to_string(),
             completed: false,
             description: "".to_string(),
@@ -106,9 +108,9 @@ impl TaskList {
 // This enum is used to choose between the valid values of this field.
 #[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
 pub enum TaskStatus {
+    NeedsAction,
     #[default]
     InProgress,
-    NeedsAction,
     Completed,
     Cancelled,
 }

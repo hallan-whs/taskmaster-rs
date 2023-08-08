@@ -58,6 +58,7 @@ impl eframe::App for App {
                             if ui.button("Add task").clicked() {
                                 // Add input task to the list of tasks
                                 self.input_task_list.tasks.push(self.input_task.clone());
+                                self.input_task.uuid = uuid::Uuid::new_v4();
 
                                 // Enable showing completed tasks if the task
                                 // that was just added is marked as complete

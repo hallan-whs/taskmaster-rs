@@ -91,15 +91,18 @@ impl TaskView for ClassicView {
 
                         // Create dropdown containing the task's status
                         if task.status != TaskStatus::InProgress {
-                            egui::ComboBox::from_label("Status")
+                            // Combo box IDs are normally generated using their label.
+                            // If two elements have the same label, weird stuff happens
+                            // So an id is generated using the `uuid` library.
+                            egui::ComboBox::new(task.uuid.to_u128_le(), "Status")
                                 .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
                                 .show_ui(ui, |ui| {
-                                    for _status in TaskStatus::iterator() {
+                                    for status in TaskStatus::iterator() {
                                         // Iterate over possible statuses and show each as an option
                                         ui.selectable_value(
                                             &mut task.status,
-                                            *_status,
-                                            format!("{:?}", _status).to_case(Case::Title),
+                                            *status,
+                                            format!("{:?}", status).to_case(Case::Title),
                                         );
                                     }
                                 });
