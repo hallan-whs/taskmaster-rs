@@ -6,17 +6,12 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-chrono = "0.4.*"
-colorsys = "0.6.7"
-convert_case = "0.6.0"
-eframe = { version = "0.22.0" }
-egui_extras = { version = "0.22.0", features = ["datepicker"] }
-ical = { version = "0.8.0", features = ["generator"] }
-wildmatch = "2.1.1"
-
-[dependencies.uuid]
-version = "1.4.1"
-features = [
-    "v4",                # Lets you generate random UUIDs
-    "fast-rng",          # Use a faster (but still sufficiently random) RNG
-]
+chrono = "0"
+colorsys = "0"
+convert_case = "0"
+eframe = "0"
+egui_file = "0"
+egui_extras = { version = "0", features = ["datepicker"] }
+ical = "0"
+uuid = { version = "1", features = [ "v4", "fast-rng" ] }
+wildmatch = "2"

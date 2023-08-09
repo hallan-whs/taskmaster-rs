@@ -33,6 +33,8 @@ impl TaskView for ClassicView {
 
         ui.separator();
 
+        ui.spacing_mut().item_spacing.y = 3.5;
+
         // Iterates over each task in the task list, keeping or removing each task
         // based on a returned boolean which is determined within each iteration
         // In this case, the returned boolean indicates whether the task's

@@ -21,9 +21,9 @@ pub fn percentage_slider(ui: &mut Ui, percent: &mut u8) -> Response {
 // Commonly used frame for different panels of the application
 pub fn basic_frame() -> egui::Frame {
     egui::Frame::default()
-        .inner_margin(10.0)
+        .inner_margin(10.)
         .stroke(eframe::epaint::Stroke {
-            width: 1.0,
+            width: 1.,
             color: egui::Color32::GRAY,
         })
 }

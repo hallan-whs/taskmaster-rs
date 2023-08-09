@@ -4,7 +4,7 @@
 
 use chrono::prelude::*;
 use eframe::egui;
-use std::{cmp::Ordering, slice::Iter, cell::RefCell, rc::Rc};
+use std::{cell::RefCell, cmp::Ordering, rc::Rc, slice::Iter};
 
 // Holds the data for a task
 #[derive(Clone, Debug, PartialEq)]
@@ -39,7 +39,7 @@ impl Default for Task {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct TaskList {
     pub name: String,
     pub tasks: Vec<Task>,
@@ -89,18 +89,6 @@ impl TaskList {
     // Adds a task to a task list, and executes any other required code
     pub fn add(&mut self, task: Task) {
         self.tasks.push(task);
-    }
-
-    // Returns whether or not the task list has any modals which are already open
-    pub fn has_any_modals(&self) -> bool {
-        let mut has_any_modals = false;
-        for task in self.tasks.iter() {
-            if *task.show_modal.borrow() {
-                has_any_modals = true;
-                break;
-            }
-        }
-        has_any_modals
     }
 }
 

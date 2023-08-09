@@ -1,6 +1,6 @@
 use taskmaster_rs::app;
 
-const WINDOW_TITLE: &str = "Hello world";
+const WINDOW_TITLE: &str = "Taskmaster";
 
 fn main() {
     // Initialize the window with a default option set and run the app defined in app.rs

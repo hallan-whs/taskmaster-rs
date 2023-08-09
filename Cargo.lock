@@ -794,6 +794,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_file"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57fb96aae5ae55ab01ecbe3f8308d95d266f36a81e15d3d70626793e70f20cc1"
+dependencies = [
+ "egui",
+]
+
+[[package]]
 name = "egui_glow"
 version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2101,6 +2110,7 @@ dependencies = [
  "convert_case",
  "eframe",
  "egui_extras",
+ "egui_file",
  "ical",
  "uuid",
  "wildmatch",

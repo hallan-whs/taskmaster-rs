@@ -13,16 +13,15 @@ pub fn spawn(task: &mut Task, ctx: &egui::Context) {
         .id(task.uuid.to_string().into())
         .open(&mut task.show_modal.clone().borrow_mut())
         .show(ctx, |ui| {
+            // Set global ui scale
+            ctx.set_pixels_per_point(1.75);
 
-        // Set global ui scale
-        ctx.set_pixels_per_point(1.75);
+            // Set spacing between panels
+            ui.spacing_mut().item_spacing = egui::Vec2::splat(7.5);
 
-        // Set spacing between panels
-        ui.spacing_mut().item_spacing = egui::vec2(10.0, 10.0);
-
-        crate::ui_elements::basic_frame().show(ui, |ui| {
-            // Task editing UI
-            task_edit::full(ui, task);
-        })
-    });
+            crate::ui_elements::basic_frame().show(ui, |ui| {
+                // Task editing UI
+                task_edit::full(ui, task);
+            })
+        });
 }

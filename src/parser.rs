@@ -8,6 +8,8 @@ use eframe::egui;
 
 use crate::task::*;
 
+const FORMAT: &str = "%Y%m%dT%H%M%S";
+
 impl TaskList {
     /// Converts an iCal file to a TaskList.
     ///
@@ -16,6 +18,8 @@ impl TaskList {
     /// use taskmaster_rs::task::*;
     /// use std::path::Path;
     /// use std::fs;
+    ///
+    /// use std::{cell::RefCell, rc::Rc};
     ///
     /// use eframe::egui::Color32;
     ///
@@ -34,8 +38,8 @@ impl TaskList {
     ///             priority: 9,
     ///             status: TaskStatus::NeedsAction,
     ///             due: Some(chrono::NaiveDate::parse_from_str("20230825", "%Y%m%d").unwrap()),
-    ///             show_modal: false,
-    ///             created: chrono::NaiveDateTime::parse_from_str("20230801151208", "%Y%m%d%H%M%S").unwrap()
+    ///             show_modal: Rc::new(RefCell::new(false)),
+    ///             created: chrono::NaiveDateTime::parse_from_str("20230801T151208", "%Y%m%dT%H%M%S").unwrap()
     ///         }],
     ///         color: Color32::from_rgb(83, 130, 163)
     ///     }
@@ -107,9 +111,7 @@ impl TaskList {
                     // Set the currently addressed task's due date
                     "DUE" => {
                         let datestr = value;
-                        if let Ok(date) =
-                            chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S")
-                        {
+                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, FORMAT) {
                             tasks[task_counter].due = Some(date.date());
                         } else {
                             return Err(ParseFromFileError::InvalidField);
@@ -142,7 +144,7 @@ impl TaskList {
                                 TaskStatus::Completed
                             }
                             "CANCELLED" => TaskStatus::Cancelled,
-                            _ => return Err(ParseFromFileError::InvalidStatus),
+                            _ => return Err(ParseFromFileError::InvalidField),
                         }
                     }
                     // Set the currently addressed task's description
@@ -160,9 +162,7 @@ impl TaskList {
                     // Store the task's creation date
                     "CREATED" => {
                         let datestr = value;
-                        if let Ok(date) =
-                            chrono::NaiveDateTime::parse_from_str(&datestr, "%Y%m%dT%H%M%S")
-                        {
+                        if let Ok(date) = chrono::NaiveDateTime::parse_from_str(&datestr, FORMAT) {
                             tasks[task_counter].created = date;
                         } else {
                             return Err(ParseFromFileError::InvalidField);
@@ -256,9 +256,9 @@ X-PUBLISHED-TTL:PT4H",
             ical_text.push_str(format!("UID:{}\n", task.uuid).as_str());
 
             // Gets the current date and converts it to be compatible with the ical format
-            let nowstr = chrono::Utc::now().naive_utc().format("%Y%m%dT%H%M%S");
+            let nowstr = chrono::Utc::now().naive_utc().format(FORMAT);
             // Gets the date the task was created and converts it as well
-            let createdstr = task.created.format("%Y%m%dT%H%M%S");
+            let createdstr = task.created.format(FORMAT);
 
             // Add metadata dates for the task
             ical_text.push_str(format!("CREATED:{}\n", createdstr).as_str());
@@ -273,8 +273,7 @@ X-PUBLISHED-TTL:PT4H",
                 ical_text.push_str(
                     format!(
                         "DUE:{}\n",
-                        due.and_time(chrono::NaiveTime::default())
-                            .format("%Y%m%dT%H%M%S")
+                        due.and_time(chrono::NaiveTime::default()).format(FORMAT)
                     )
                     .to_string()
                     .as_str(),
@@ -321,10 +320,9 @@ X-PUBLISHED-TTL:PT4H",
 }
 
 // Possible errors for parsing from a file
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ParseFromFileError {
     InvalidFile,
-    InvalidStatus,
     NonTaskItem,
     InvalidField,
 }
