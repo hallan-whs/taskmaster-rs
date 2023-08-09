@@ -58,8 +58,10 @@ impl TaskView for ClassicView {
 
                     // Create rich text containing the task's description
                     let mut desc_text = task.description.replace('\n', " ");
-                    desc_text.truncate(20);
-                    let desc_text = desc_text.trim().to_string() + "...";
+                    if desc_text.trim().len() > 20 {
+                        desc_text.truncate(20);
+                        desc_text = desc_text.trim().to_string() + "...";
+                    }
                     let mut desc_text = RichText::new(desc_text);
                     if task.completed {
                         desc_text = desc_text.strikethrough();
@@ -77,7 +79,7 @@ impl TaskView for ClassicView {
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         // Click this to show a modal with a task's full details
                         // Doesn't spawn it if there's already one present
-                        if ui.button("...").clicked() {
+                        if ui.button("···").clicked() {
                             *task.show_modal.borrow_mut() = true;
                         };
 

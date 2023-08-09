@@ -20,18 +20,9 @@ pub fn spawn(task: &mut Task, ctx: &egui::Context) {
         // Set spacing between panels
         ui.spacing_mut().item_spacing = egui::vec2(10.0, 10.0);
 
-        //Task input panel
-        basic_frame().show(ui, |ui| {
-            // Expand to fit window
-            ui.set_height(ui.available_height());
-            ui.set_width(ui.available_width());
-
-            ui.horizontal(|ui| {
-                ui.vertical(|ui| {
-                    // Task editing UI
-                    task_edit::full(ui, task);
-                });
-            })
+        crate::ui_elements::basic_frame().show(ui, |ui| {
+            // Task editing UI
+            task_edit::full(ui, task);
         })
     });
 }

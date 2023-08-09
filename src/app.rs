@@ -96,7 +96,12 @@ impl eframe::App for App {
 
                     // This is the button which switches between the views
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
-                        if ui.button("...").clicked() {
+                        let btn_str = if self.show_full_edit {
+                            "⏶"
+                        } else {
+                            "⏷"
+                        };
+                        if ui.button(btn_str).clicked() {
                             self.show_full_edit = !self.show_full_edit
                         }
                     });
