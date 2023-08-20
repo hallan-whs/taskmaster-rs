@@ -9,7 +9,7 @@ use convert_case::{Case, Casing};
 use eframe::egui::{self, Ui};
 use egui_extras::DatePickerButton;
 
-use crate::task::TaskStatus;
+use crate::task::Status;
 
 use super::percentage_slider;
 
@@ -52,12 +52,12 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
     egui::ComboBox::from_label("Status")
         .selected_text(format!("{:?}", &task.status).to_case(Case::Title)) // Show selected status
         .show_ui(ui, |ui| {
-            for _status in TaskStatus::iterator() {
+            for status in Status::iterator() {
                 // Iterate over possible statuses and show each as an option
                 ui.selectable_value(
                     &mut task.status,
-                    *_status,
-                    format!("{:?}", _status).to_case(Case::Title),
+                    *status,
+                    format!("{status:?}",).to_case(Case::Title),
                 );
             }
         });
@@ -68,6 +68,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
         ui.checkbox(&mut has_due, "Task has due date");
 
         if has_due & task.due.is_some() {
+            #[allow(clippy::unwrap_used)]
             let mut due = task.due.unwrap();
 
             // Due date input
@@ -75,7 +76,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
 
             task.due = Some(due);
         } else if has_due & task.due.is_none() {
-            task.due = Some(chrono::Local::now().date_naive())
+            task.due = Some(chrono::Local::now().date_naive());
         } else {
             task.due = None;
         }
@@ -84,7 +85,7 @@ pub fn full(ui: &mut Ui, task: &mut crate::task::Task) {
     // Task complete checkbox
     ui.checkbox(&mut task.completed, "Task is complete");
 
-    if task.status == TaskStatus::Completed {
-        task.completed = true
+    if task.status == Status::Completed {
+        task.completed = true;
     }
 }

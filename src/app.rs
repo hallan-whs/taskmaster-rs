@@ -43,6 +43,7 @@ impl App {
 }
 
 // Define how the app behaves based on the app state
+#[allow(clippy::too_many_lines)]
 impl eframe::App for App {
     // - Main render loop function ----------------------------------------
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
@@ -63,7 +64,7 @@ impl eframe::App for App {
                     // This stores the path of the imported file
                     let mut opened_file: Option<PathBuf> = None;
 
-                    if (ui.button("Open file")).clicked() {
+                    if ui.button("Open file").clicked() {
                         // Create a file dialog, which reads from and writes to 
                         // the file path variable created earlier
                         let mut dialog = FileDialog::open_file(opened_file.clone());
@@ -84,7 +85,7 @@ impl eframe::App for App {
                             // If the file has a valid path
                             if let Some(file) = dialog.path() {
                                 // Store the path
-                                opened_file = Some(file.to_path_buf())
+                                opened_file = Some(file.to_path_buf());
                             }
                         }
                     }
@@ -149,9 +150,11 @@ impl eframe::App for App {
                                 // Get contents of file which will be exported
                                 let list_str = self.input_task_list.to_ical_string();
                                 // Create the file which will have the data
-                                let mut f = File::create(file).unwrap();
+                                let mut f = File::create(file)
+                                    .expect("could not create file");
                                 // Write the data to the file
-                                f.write(list_str.as_bytes()).unwrap();
+                                f.write_all(list_str.as_bytes())
+                                    .expect("could not write data to file");
                             }
                         }
                     }
@@ -181,11 +184,11 @@ impl eframe::App for App {
                                 self.input_task.uuid = uuid::Uuid::new_v4();
 
                                 // Enable showing completed tasks if the task
-                                // that was just added is marked as complete
+                                // that was just added is marked as complete.
                                 // This prevents confusion from a newly added
                                 // task not being shown if it's already marked
                                 // as complete when it's added to the list.
-                                if self.input_task.completed & !self.show_completed_tasks {
+                                if self.input_task.completed && !self.show_completed_tasks {
                                     self.show_completed_tasks = true;
                                 }
                             }
@@ -205,7 +208,7 @@ impl eframe::App for App {
                                 // that was just added is marked as complete
                                 // This prevents confusion from a newly added
                                 // task not being shown if it's marked complete
-                                if self.input_task.completed & !self.show_completed_tasks {
+                                if self.input_task.completed && !self.show_completed_tasks {
                                     self.show_completed_tasks = true;
                                 }
                             }
@@ -222,7 +225,7 @@ impl eframe::App for App {
                             "⏷"
                         };
                         if ui.button(btn_str).clicked() {
-                            self.show_full_edit = !self.show_full_edit
+                            self.show_full_edit = !self.show_full_edit;
                         }
                     });
                 })
@@ -251,12 +254,12 @@ impl eframe::App for App {
                     egui::ComboBox::from_label("")
                         .selected_text(format!("{:?}", &self.sort_by)) // Show selected sort field
                         .show_ui(ui, |ui| {
-                            for _sort_by in TaskSort::iterator() {
+                            for sort_by in TaskSort::iterator() {
                                 // Iterate over sortable fields and display each as an option
                                 ui.selectable_value(
                                     &mut self.sort_by,
-                                    *_sort_by,
-                                    format!("{:?}", _sort_by),
+                                    *sort_by,
+                                    format!("{sort_by:?}"),
                                 );
                             }
                         });

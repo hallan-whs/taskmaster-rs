@@ -7,7 +7,7 @@ use eframe::egui;
 use std::{cell::RefCell, cmp::Ordering, rc::Rc, slice::Iter};
 
 // Holds the data for a task
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Task {
     pub uuid: uuid::Uuid,
     pub summary: String,
@@ -15,7 +15,7 @@ pub struct Task {
     pub description: String,
     pub progress: u8,
     pub priority: u8,
-    pub status: TaskStatus,
+    pub status: Status,
     pub due: Option<NaiveDate>,
     pub created: NaiveDateTime,
     pub show_modal: Rc<RefCell<bool>>,
@@ -26,12 +26,12 @@ impl Default for Task {
     fn default() -> Self {
         Self {
             uuid: uuid::Uuid::new_v4(),
-            summary: "New task".to_string(),
+            summary: String::from("New task"),
             completed: false,
-            description: "".to_string(),
+            description: String::new(),
             progress: 0,
             priority: 0,
-            status: TaskStatus::InProgress,
+            status: Status::InProgress,
             due: None,
             created: chrono::Utc::now().naive_local(),
             show_modal: Rc::new(RefCell::new(false)),
@@ -39,7 +39,8 @@ impl Default for Task {
     }
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
+#[allow(clippy::module_name_repetitions)]
 pub struct TaskList {
     pub name: String,
     pub tasks: Vec<Task>,
@@ -48,7 +49,7 @@ pub struct TaskList {
 
 impl Default for TaskList {
     fn default() -> Self {
-        TaskList {
+        Self {
             name: "New list".to_string(),
             tasks: vec![],
             color: egui::Color32::DEBUG_COLOR,
@@ -67,20 +68,16 @@ impl TaskList {
             TaskSort::Description => self.tasks.sort_by(|a, b| { a.description.to_lowercase().cmp(&b.description.to_lowercase()) }),
             TaskSort::Progress => self.tasks.sort_by(|a, b| a.progress.cmp(&b.progress)),
             TaskSort::Priority => self.tasks.sort_by(|a, b| a.priority.cmp(&b.priority)),
-            TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).unwrap()),
+            TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).expect("could not compare summaries")),
             // This makes sure that tasks with due dates show up before ones without
             // As well as making sure that the sooner the date, the higher up the task
             TaskSort::Due => {
                 self.tasks.sort_by(|a, b| {
-                    if let Some(a_due) = a.due {
-                        if let Some(b_due) = b.due {
+                    a.due.map_or(Ordering::Equal, |a_due| {
+                        b.due.map_or(Ordering::Greater, |b_due| {
                             a_due.cmp(&b_due)
-                        } else {
-                            Ordering::Less
-                        }
-                    } else {
-                        Ordering::Greater
-                    }
+                        })
+                    })
                 });
             },
         }
@@ -94,8 +91,8 @@ impl TaskList {
 
 // The STATUS field of a VTODO can only have certain values.
 // This enum is used to choose between the valid values of this field.
-#[derive(Default, Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub enum TaskStatus {
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, PartialOrd)]
+pub enum Status {
     NeedsAction,
     #[default]
     InProgress,
@@ -103,7 +100,7 @@ pub enum TaskStatus {
     Cancelled,
 }
 
-impl TaskStatus {
+impl Status {
     // Returns an array of values of the enum, for other code to iterate over
     pub fn iterator() -> Iter<'static, Self> {
         return [
@@ -117,7 +114,8 @@ impl TaskStatus {
 }
 
 // Enum used for sorting task lists
-#[derive(Default, Debug, Clone, Copy, PartialEq)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::module_name_repetitions)]
 pub enum TaskSort {
     #[default]
     None,

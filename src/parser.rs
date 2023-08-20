@@ -28,12 +28,12 @@ impl TaskList {
     /// assert_eq!(
     ///     list,
     ///     TaskList {
-    ///         name: "test".to_string(),
+    ///         name: String::from("test"),
     ///         tasks: vec![Task {
     ///             uuid: uuid::Uuid::parse_str("ae02186d-10ae-404f-a4c9-450e06ea77cf").unwrap(),
-    ///             summary: "Task 1".to_string(),
+    ///             summary: String::from("Task 1"),
     ///             completed: false,
-    ///             description: "description\n".to_string(),
+    ///             description: String::from("description\n"),
     ///             progress: 47,
     ///             priority: 9,
     ///             status: TaskStatus::NeedsAction,
@@ -45,17 +45,22 @@ impl TaskList {
     ///     }
     /// );
     /// ```
-    pub fn from_ical_file(path: &Path) -> Result<TaskList, ParseFromFileError> {
-        let file = match File::open(path) {
-            Ok(f) => f,
-            Err(_) => return Err(ParseFromFileError::InvalidFile),
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        clippy::too_many_lines
+    )]
+    pub fn from_ical_file(path: &Path) -> Result<Self, ParseFromFileError> {
+        let Ok(file) = File::open(path)
+        else {
+            return Err(ParseFromFileError::InvalidFile)
         };
 
         let reader = io::BufReader::new(file);
 
         let lines = ical::PropertyParser::from_reader(reader);
 
-        let mut list: TaskList = TaskList::default();
+        let mut list: Self = Self::default();
         let mut tasks: Vec<Task> = vec![];
         let mut task_counter = 0usize;
 
@@ -101,7 +106,7 @@ impl TaskList {
                     // use the UUID that is generated when a Task is created.
                     "UID" => {
                         if let Ok(parsed_uuid) = uuid::Uuid::parse_str(value.as_str()) {
-                            tasks[task_counter].uuid = parsed_uuid
+                            tasks[task_counter].uuid = parsed_uuid;
                         }
                     }
                     // Set the currently addressed task's summary
@@ -137,13 +142,13 @@ impl TaskList {
                     "STATUS" => {
                         let task = &mut tasks[task_counter];
                         task.status = match value.as_str() {
-                            "IN-PROGRESS" => TaskStatus::InProgress,
-                            "NEEDS-ACTION" => TaskStatus::NeedsAction,
+                            "IN-PROGRESS" => Status::InProgress,
+                            "NEEDS-ACTION" => Status::NeedsAction,
                             "COMPLETED" => {
                                 task.completed = true;
-                                TaskStatus::Completed
+                                Status::Completed
                             }
-                            "CANCELLED" => TaskStatus::Cancelled,
+                            "CANCELLED" => Status::Cancelled,
                             _ => return Err(ParseFromFileError::InvalidField),
                         }
                     }
@@ -155,7 +160,7 @@ impl TaskList {
                     // iterate the task counter so that it can be used to address
                     // the task that is added next (if any).
                     "END" => {
-                        if value == *"VTODO".to_string() {
+                        if value == *"VTODO" {
                             task_counter += 1;
                         }
                     }
@@ -227,6 +232,7 @@ impl TaskList {
     pub fn to_ical_string(&self) -> String {
         // Initiate text that will eventually be added to the calendar file
         // As well as adding some initial variables via a format string
+        #[allow(clippy::uninlined_format_args)]
         let mut ical_text = format!(
             "BEGIN:VCALENDAR
 VERSION:2.0
@@ -261,9 +267,9 @@ X-PUBLISHED-TTL:PT4H",
             let createdstr = task.created.format(FORMAT);
 
             // Add metadata dates for the task
-            ical_text.push_str(format!("CREATED:{}\n", createdstr).as_str());
-            ical_text.push_str(format!("LAST-MODIFIED:{}\n", nowstr).as_str());
-            ical_text.push_str(format!("DTSTAMP:{}\n", nowstr).as_str());
+            ical_text.push_str(format!("CREATED:{createdstr}\n").as_str());
+            ical_text.push_str(format!("LAST-MODIFIED:{nowstr}\n").as_str());
+            ical_text.push_str(format!("DTSTAMP:{nowstr}\n").as_str());
 
             // Adds task summary
             ical_text.push_str(format!("SUMMARY:{}\n", &task.summary).as_str());
@@ -282,23 +288,23 @@ X-PUBLISHED-TTL:PT4H",
 
             // Adds task priority if it's not 0
             if task.priority != 0 {
-                ical_text.push_str(format!("PRIORITY:{}\n", task.priority).as_str())
+                ical_text.push_str(format!("PRIORITY:{}\n", task.priority).as_str());
             }
             // Adds task progress if it's not 0
             if task.progress != 0 {
-                ical_text.push_str(format!("PERCENT-COMPLETE:{}\n", task.progress).as_str())
+                ical_text.push_str(format!("PERCENT-COMPLETE:{}\n", task.progress).as_str());
             }
             // Adds task's status. The completion checkbox takes precedence,
             // but if it's not checked then the task's status field is used.
             if task.completed {
-                ical_text.push_str("STATUS:COMPLETED\n")
+                ical_text.push_str("STATUS:COMPLETED\n");
             } else {
-                let mut statstr = "STATUS:".to_string();
+                let mut statstr = String::from("STATUS:");
                 match task.status {
-                    TaskStatus::InProgress => statstr.push_str("IN-PROGRESS\n"),
-                    TaskStatus::NeedsAction => statstr.push_str("NEEDS-ACTION\n"),
-                    TaskStatus::Completed => statstr.push_str("COMPLETED\n"),
-                    TaskStatus::Cancelled => statstr.push_str("CANCELLED\n"),
+                    Status::InProgress => statstr.push_str("IN-PROGRESS\n"),
+                    Status::NeedsAction => statstr.push_str("NEEDS-ACTION\n"),
+                    Status::Completed => statstr.push_str("COMPLETED\n"),
+                    Status::Cancelled => statstr.push_str("CANCELLED\n"),
                 }
                 ical_text.push_str(&statstr);
             }

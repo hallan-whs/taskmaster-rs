@@ -10,5 +10,5 @@ fn main() {
         native_options,
         Box::new(|cc| Box::new(app::App::new(cc))),
     )
-    .unwrap();
+    .expect("failed to start egui");
 }
