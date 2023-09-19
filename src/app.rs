@@ -204,10 +204,6 @@ impl eframe::App for App {
                                     ..Task::default()
                                 });
 
-                                // Enable showing completed tasks if the task
-                                // that was just added is marked as complete
-                                // This prevents confusion from a newly added
-                                // task not being shown if it's marked complete
                                 if self.input_task.completed && !self.show_completed_tasks {
                                     self.show_completed_tasks = true;
                                 }
@@ -217,7 +213,7 @@ impl eframe::App for App {
                         });
                     }
 
-                    // This is the button which switches between the views
+                    // This is the button which switches full and simplified UIs
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Max), |ui| {
                         let btn_str = if self.show_full_edit {
                             "⏶"
@@ -228,6 +224,7 @@ impl eframe::App for App {
                             self.show_full_edit = !self.show_full_edit;
                         }
                     });
+
                 })
             });
 
@@ -238,32 +235,7 @@ impl eframe::App for App {
                 ui.set_height(ui.available_height());
 
                 // Top bar, with sorting and other list options
-                ui.horizontal(|ui| {
-                    // Checkbox to show tasks that have been completed
-                    ui.checkbox(&mut self.show_completed_tasks, "Show completed tasks");
-
-                    ui.label("| ");
-
-                    // Button to sort task list by chosen field
-                    if ui.button("Sort").clicked() {
-                        self.input_task_list.sort(self.sort_by);
-                    }
-
-                    // Dropdown to choose which field to sort by
-                    ui.label("by");
-                    egui::ComboBox::from_label("")
-                        .selected_text(format!("{:?}", &self.sort_by)) // Show selected sort field
-                        .show_ui(ui, |ui| {
-                            for sort_by in TaskSort::iterator() {
-                                // Iterate over sortable fields and display each as an option
-                                ui.selectable_value(
-                                    &mut self.sort_by,
-                                    *sort_by,
-                                    format!("{sort_by:?}"),
-                                );
-                            }
-                        });
-                });
+                top_bar(self, ui);
 
                 // Scrollable area that shows all the tasks
                 egui::ScrollArea::vertical().show_rows(
@@ -282,4 +254,30 @@ impl eframe::App for App {
             });
         });
     }
+}
+
+// Top bar, with sorting and other list options
+fn top_bar(app: &mut App, ui: &mut egui::Ui) {
+    ui.horizontal(|ui| {
+        // Checkbox to show tasks that have been completed
+        ui.checkbox(&mut app.show_completed_tasks, "Show completed tasks");
+
+        ui.label("| ");
+
+        // Button to sort task list by chosen field
+        if ui.button("Sort").clicked() {
+            app.input_task_list.sort(app.sort_by);
+        }
+
+        // Dropdown to choose which field to sort by
+        ui.label("by");
+        egui::ComboBox::from_label("")
+            .selected_text(format!("{:?}", &app.sort_by)) // Show selected sort field
+            .show_ui(ui, |ui| {
+                for sort_by in TaskSort::iterator() {
+                    // Iterate over sortable fields and display each as an option
+                    ui.selectable_value(&mut app.sort_by, *sort_by, format!("{sort_by:?}"));
+                }
+            });
+    });
 }

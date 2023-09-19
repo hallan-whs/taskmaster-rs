@@ -26,13 +26,6 @@ pub struct ClassicView;
 
 impl TaskView for ClassicView {
     fn display(ui: &mut Ui, task_list: &mut TaskList, show_completed_tasks: bool) {
-        let mut last_task_uuid = 0u128;
-        if let Some(lasttask) = task_list.tasks.last() {
-            last_task_uuid = lasttask.uuid.as_u128();
-        }
-
-        ui.separator();
-
         ui.spacing_mut().item_spacing.y = 3.5;
 
         // Iterates over each task in the task list, keeping or removing each task
@@ -48,6 +41,8 @@ impl TaskView for ClassicView {
 
             // If show_completed_tasks is enabled, completed tasks will be shown, otherwise they will be hidden
             if show_completed_tasks || !task.completed {
+                ui.separator();
+
                 ui.horizontal(|ui| {
                     // Expand to fit window
                     ui.set_width(ui.available_width());
@@ -123,11 +118,6 @@ impl TaskView for ClassicView {
                         }
                     });
                 });
-                // If the currently addressed task is not the final task in the list,
-                // Draw a separator between the tasks
-                if task.uuid.as_u128() != last_task_uuid {
-                    ui.separator();
-                }
 
                 if task.status == Status::Completed {
                     task.completed = true;

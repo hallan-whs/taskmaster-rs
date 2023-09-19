@@ -68,7 +68,7 @@ impl TaskList {
             TaskSort::Description => self.tasks.sort_by(|a, b| { a.description.to_lowercase().cmp(&b.description.to_lowercase()) }),
             TaskSort::Progress => self.tasks.sort_by(|a, b| a.progress.cmp(&b.progress)),
             TaskSort::Priority => self.tasks.sort_by(|a, b| a.priority.cmp(&b.priority)),
-            TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).expect("could not compare summaries")),
+            TaskSort::Status => self.tasks.sort_by(|a, b| a.status.partial_cmp(&b.status).expect("could not compare statuses for sorting")),
             // This makes sure that tasks with due dates show up before ones without
             // As well as making sure that the sooner the date, the higher up the task
             TaskSort::Due => {
